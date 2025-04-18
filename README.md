@@ -1,6 +1,6 @@
 # 以太坊开发工具集（基于Vue）
 
-![以太坊Logo](https://ethereum.org/static/a183661dd70e0e5c70689a0ec95ef0ba/13c43/eth-diamond-purple.png)
+![以太坊Logo](public/img/project.png)
 
 一套基于Vue.js构建的以太坊开发工具集合，旨在简化区块链开发中的常见任务。
 
