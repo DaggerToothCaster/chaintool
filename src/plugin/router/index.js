@@ -65,6 +65,11 @@ const routes = [
         component: () => import('@/views/11.EventLog/index.vue')
     },
     {
+        path: '/12.Batch-Address-Balance',
+        name: '12.Batch-Address-Balance',
+        component: () => import('@/views/12.Batch-Address-Balance/index.vue')
+    },
+    {
         path: '/pool/:poolName',
         name: 'pool-detail',
         component: () => import('@/views/pool/index.vue')

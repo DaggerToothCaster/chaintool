@@ -46,6 +46,7 @@ export default {
         { path: '/9.abi', name: 'ABI可视化调用', description: '通过可视化界面调用智能合约 ABI' },
         { path: '/10.sign', name: 'Sign签名', description: '生成和验证签名' },
         { path: '/11.EventLog', name: '交易日志解码器', description: '解码以太坊交易日志' },
+        { path: '/12.Batch-Address-Balance', name: '批量查询地址资产', description: '批量查询地址资产' },
       ],
     };
   },
