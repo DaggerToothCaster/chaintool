@@ -70,6 +70,16 @@ const routes = [
         component: () => import('@/views/12.Batch-Address-Balance/index.vue')
     },
     {
+        path: '/13.node-monitor',
+        name: '13.node-monitor',
+        component: () => import('@/views/13.node-monitor/index.vue')
+    },
+    {
+        path: '/14.add-chain',
+        name: '14.add-chain',
+        component: () => import('@/views/14.add-chain/index.vue')
+    },
+    {
         path: '/pool/:poolName',
         name: 'pool-detail',
         component: () => import('@/views/pool/index.vue')

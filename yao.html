@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>六爻算卦生成大乐透号码</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #8B4513;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .divination-area {
+            margin-bottom: 30px;
+        }
+        .yao-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .yao {
+            width: 200px;
+            height: 20px;
+            margin: 5px;
+            background-color: #8B4513;
+        }
+        .broken-yao {
+            width: 200px;
+            height: 20px;
+            margin: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .broken-part {
+            width: 90px;
+            height: 20px;
+            background-color: #8B4513;
+        }
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #8B4513;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #A0522D;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px dashed #8B4513;
+            border-radius: 5px;
+            background-color: #FFF8DC;
+        }
+        .lottery-numbers {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #FF6347;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 5px;
+            font-weight: bold;
+        }
+        .number.blue {
+            background-color: #1E90FF;
+        }
+        .explanation {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .gua-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .gua-name {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>六爻算卦生成大乐透号码</h1>
+        
+        <div class="divination-area">
+            <p>请集中精神，默念你想问的问题，然后点击下面的按钮进行占卜：</p>
+            
+            <div class="gua-container">
+                <div>
+                    <div class="gua-name">本卦</div>
+                    <div id="original-gua" class="yao-container"></div>
+                </div>
+                <div>
+                    <div class="gua-name">变卦</div>
+                    <div id="changed-gua" class="yao-container"></div>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button id="divination-btn">开始占卜</button>
+            </div>
+        </div>
+        
+        <div id="result" class="result" style="display: none;">
+            <h3>生成的大乐透号码：</h3>
+            <div class="lottery-numbers" id="lottery-numbers"></div>
+            
+            <div class="explanation">
+                <p><strong>说明：</strong>此号码由六爻卦象算法生成，仅供娱乐参考。大乐透前区从1-35中选择5个号码，后区从1-12中选择2个号码。</p>
+                <p>卦象解释：<span id="gua-explanation"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('divination-btn').addEventListener('click', function() {
+            // 清空之前的卦象
+            document.getElementById('original-gua').innerHTML = '';
+            document.getElementById('changed-gua').innerHTML = '';
+            
+            // 生成六爻卦象（本卦）
+            const originalGua = generateGua();
+            displayGua(originalGua, 'original-gua');
+            
+            // 生成变卦
+            const changedGua = generateChangedGua(originalGua);
+            displayGua(changedGua, 'changed-gua');
+            
+            // 根据卦象生成大乐透号码
+            const lotteryNumbers = generateLotteryNumbers(originalGua, changedGua);
+            displayLotteryNumbers(lotteryNumbers);
+            
+            // 显示结果区域
+            document.getElementById('result').style.display = 'block';
+            
+            // 添加卦象解释
+            document.getElementById('gua-explanation').textContent = getGuaExplanation(originalGua, changedGua);
+        });
+        
+        // 生成一爻（0为阴爻，1为阳爻，2为老阴，3为老阳）
+        function generateYao() {
+            // 传统方法：三枚硬币，两正一反为少阳，两反一正为少阴，三正为老阳，三反为老阴
+            // 这里简化为随机数
+            const random = Math.random();
+            if (random < 0.25) return 0; // 少阴
+            else if (random < 0.5) return 1; // 少阳
+            else if (random < 0.75) return 2; // 老阴
+            else return 3; // 老阳
+        }
+        
+        // 生成六爻卦象
+        function generateGua() {
+            const gua = [];
+            for (let i = 0; i < 6; i++) {
+                gua.push(generateYao());
+            }
+            return gua;
+        }
+        
+        // 生成变卦
+        function generateChangedGua(originalGua) {
+            return originalGua.map(yao => {
+                if (yao === 2) return 1; // 老阴变阳
+                if (yao === 3) return 0; // 老阳变阴
+                return yao; // 少阳少阴不变
+            });
+        }
+        
+        // 显示卦象
+        function displayGua(gua, elementId) {
+            const container = document.getElementById(elementId);
+            
+            // 从下往上显示六爻
+            for (let i = 5; i >= 0; i--) {
+                const yao = gua[i];
+                if (yao === 0 || yao === 2) { // 阴爻或老阴
+                    const div = document.createElement('div');
+                    div.className = 'broken-yao';
+                    div.innerHTML = '<div class="broken-part"></div><div class="broken-part"></div>';
+                    container.appendChild(div);
+                    
+                    if (yao === 2) { // 老阴
+                        const mark = document.createElement('div');
+                        mark.textContent = '×';
+                        mark.style.textAlign = 'center';
+                        container.appendChild(mark);
+                    }
+                } else { // 阳爻或老阳
+                    const div = document.createElement('div');
+                    div.className = 'yao';
+                    container.appendChild(div);
+                    
+                    if (yao === 3) { // 老阳
+                        const mark = document.createElement('div');
+                        mark.textContent = '○';
+                        mark.style.textAlign = 'center';
+                        container.appendChild(mark);
+                    }
+                }
+            }
+        }
+        
+        // 根据卦象生成大乐透号码
+        function generateLotteryNumbers(originalGua, changedGua) {
+            // 前区号码1-35，后区号码1-12
+            const frontNumbers = [];
+            const backNumbers = [];
+            
+            // 使用卦象的数字特征来生成号码
+            const guaNumbers = [...originalGua, ...changedGua];
+            
+            // 生成前区5个号码
+            while (frontNumbers.length < 5) {
+                // 基于卦象生成数字
+                let num = 0;
+                for (let i = 0; i < 6; i++) {
+                    num = (num * 2 + guaNumbers[i]) % 35 + 1;
+                }
+                
+                // 确保不重复
+                if (!frontNumbers.includes(num)) {
+                    frontNumbers.push(num);
+                }
+            }
+            
+            // 生成后区2个号码
+            while (backNumbers.length < 2) {
+                let num = 0;
+                for (let i = 6; i < 12; i++) {
+                    num = (num * 2 + guaNumbers[i]) % 12 + 1;
+                }
+                
+                if (!backNumbers.includes(num)) {
+                    backNumbers.push(num);
+                }
+            }
+            
+            // 排序
+            frontNumbers.sort((a, b) => a - b);
+            backNumbers.sort((a, b) => a - b);
+            
+            return {
+                front: frontNumbers,
+                back: backNumbers
+            };
+        }
+        
+        // 显示大乐透号码
+        function displayLotteryNumbers(numbers) {
+            const container = document.getElementById('lottery-numbers');
+            container.innerHTML = '';
+            
+            // 显示前区号码
+            numbers.front.forEach(num => {
+                const div = document.createElement('div');
+                div.className = 'number';
+                div.textContent = num;
+                container.appendChild(div);
+            });
+            
+            // 添加分隔符
+            const separator = document.createElement('div');
+            separator.textContent = '+';
+            separator.style.margin = '0 10px';
+            separator.style.display = 'flex';
+            separator.style.alignItems = 'center';
+            container.appendChild(separator);
+            
+            // 显示后区号码
+            numbers.back.forEach(num => {
+                const div = document.createElement('div');
+                div.className = 'number blue';
+                div.textContent = num;
+                container.appendChild(div);
+            });
+        }
+        
+        // 获取卦象解释
+        function getGuaExplanation(originalGua, changedGua) {
+            // 简化的卦象解释
+            const yinCount = originalGua.filter(yao => yao === 0 || yao === 2).length;
+            const yangCount = 6 - yinCount;
+            
+            if (yangCount === 6) return "乾为天卦，刚健旺盛，建议选择较大号码。";
+            if (yinCount === 6) return "坤为地卦，柔顺包容，建议选择较小号码。";
+            if (yangCount > yinCount) return "阳盛阴衰，卦象显示积极向上，建议选择奇数为主。";
+            if (yinCount > yangCount) return "阴盛阳衰，卦象显示内敛含蓄，建议选择偶数为主。";
+            
+            return "阴阳平衡，卦象显示和谐稳定，建议号码均匀分布。";
+        }
+    </script>
+</body>
+</html>
