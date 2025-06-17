@@ -110,20 +110,20 @@ export default {
   data() {
     return {
       // RPC连接相关
-      rpcUrl: '',
+      rpcUrl: 'https://rpc-mainnet.noschain.org',
       isConnected: false,
       connecting: false,
       provider: null,
 
       // 钱包相关
-      privateKey: '',
+      privateKey: '0x6a3ea868a70f7d83140ed0a96debf709b2684ccfe6da025f6e81acc6a42077fc',
       wallet: null,
       walletAddress: '',
       ethBalance: '0',
 
       // 资产相关
       assetType: 'native',
-      tokenContractAddress: '',
+      tokenContractAddress: '0x627b03358c4bd04D0594ff7c31F38D13231f4f8a',
       tokenName: '',
       tokenSymbol: '',
       tokenBalance: '0',
@@ -233,49 +233,113 @@ export default {
         return;
       }
 
-      // 添加地址格式校验
-      if (!this.tokenContractAddress.startsWith('0x')) {
-        this.$message.error('合约地址必须以0x开头');
+      // 标准化地址（v4旧版写法）
+      const contractAddress = ethers.utils.getAddress(
+        this.tokenContractAddress.startsWith('0x')
+          ? this.tokenContractAddress
+          : `0x${this.tokenContractAddress}`
+      );
+
+      if (!this.walletAddress) {
+        this.$message.warning('请先加载钱包');
         return;
       }
+      const walletAddress = this.walletAddress;
 
       try {
+        // v4版本的ABI定义
         const tokenAbi = [
-          'function name() view returns (string)',
-          'function symbol() view returns (string)',
-          'function decimals() view returns (uint8)',
-          'function balanceOf(address) view returns (uint256)'
+          {
+            "constant": true,
+            "inputs": [],
+            "name": "name",
+            "outputs": [{ "name": "", "type": "string" }],
+            "payable": false,
+            "type": "function"
+          },
+          {
+            "constant": true,
+            "inputs": [],
+            "name": "symbol",
+            "outputs": [{ "name": "", "type": "string" }],
+            "payable": false,
+            "type": "function"
+          },
+          {
+            "constant": true,
+            "inputs": [],
+            "name": "decimals",
+            "outputs": [{ "name": "", "type": "uint8" }],
+            "payable": false,
+            "type": "function"
+          },
+          {
+            "constant": true,
+            "inputs": [{ "name": "_owner", "type": "address" }],
+            "name": "balanceOf",
+            "outputs": [{ "name": "", "type": "uint256" }],
+            "payable": false,
+            "type": "function"
+          }
         ];
 
-        // 确保使用正确的provider
+        // v4版本的合约初始化
         const tokenContract = new ethers.Contract(
-          this.tokenContractAddress,
+          contractAddress,
           tokenAbi,
           this.provider
         );
 
-        console.log("合约信息", tokenContract)
-        console.log("this.walletAddress", this.walletAddress)
+        // v4版本的低级调用方法
+        const safeContractCall = async (method, args = [], fallbackValue) => {
+          try {
+            // 标准调用
+            return await tokenContract.functions[method](...args);
+          } catch (error) {
+            console.warn(`标准${method}()调用失败，尝试低级调用:`, error);
 
-        const [name, symbol, decimals, balance] = await Promise.all([
-          tokenContract.name(),
-          tokenContract.symbol(),
-          tokenContract.decimals(),
-          tokenContract.balanceOf(this.walletAddress)
-        ]);
+            try {
+              // v4版本的ABI编码
+              const iface = new ethers.utils.Interface(tokenAbi);
+              const data = iface.functions[method].encode(args);
 
-        console.log("合约信息", name, symbol, decimals, balance)
+              const result = await this.provider.call({
+                to: contractAddress,
+                data
+              });
 
+              // 特殊处理返回值
+              if (method === 'decimals') return parseInt(result, 16) || fallbackValue;
+              if (result === '0x') return fallbackValue;
+
+              // v4版本的结果解码
+              const decoded = iface.functions[method].decode(result);
+              return decoded[0] || fallbackValue;
+            } catch (fallbackError) {
+              console.error(`备用${method}()调用失败:`, fallbackError);
+              return fallbackValue;
+            }
+          }
+        };
+
+        // 顺序执行调用（v4的Promise.all可能有兼容性问题）
+        const name = await safeContractCall('name', [], 'Unknown Token');
+        const symbol = await safeContractCall('symbol', [], '???');
+        const decimals = await safeContractCall('decimals', [], 18);
+        const balance = await tokenContract.functions.balanceOf(walletAddress)
+          .catch(() => ethers.constants.Zero);
+
+        // 更新状态
         this.tokenName = name;
         this.tokenSymbol = symbol;
         this.tokenDecimals = decimals;
-        this.tokenBalance = ethers.utils.formatUnits(balance, decimals);
+        this.tokenBalance = ethers.utils.formatEther(balance); // v4使用formatEther统一处理
         this.tokenInfoLoaded = true;
 
         this.$message.success('代币信息加载成功');
       } catch (error) {
-        console.error('完整的错误信息:', error);
-        this.$message.error(`加载代币信息失败: ${error.message}`);
+        console.error('代币加载错误:', error);
+        this.$message.error(`加载失败: ${error.message}`);
       }
     },
 

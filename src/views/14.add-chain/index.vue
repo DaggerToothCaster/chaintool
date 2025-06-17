@@ -350,11 +350,11 @@ export default {
           blockExplorerUrls: ['https://www.kortho.io/#/']
         },
         nos: {
-          chainId: '2463',
+          chainId: '2643',
           chainName: 'NOS Chain',
           nativeCurrency: {
-            name: 'NOS',
-            symbol: 'NOS',
+            name: 'KTO',
+            symbol: 'KTO',
             decimals: 18
           },
           rpcUrls: [
